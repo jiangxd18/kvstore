@@ -19,11 +19,11 @@ process()方法，当进程收到其他进程传来的消息时调用的方法�
 
 具体的[进程间的通信方式](https://github.com/jiangxd18/kvstore/blob/master/desc/communicate.md)有这些
 
-**最初的实现：**项目中最初采用的方式是利用NIO中的socketChannel和socketServerChannel实现通信
+最初的实现：项目中最初采用的方式是利用NIO中的socketChannel和socketServerChannel实现通信
 
 
 
-**最后落实：**调用的是封装好的RPC服务，暴露在外面的接口是process，只要在接口里实现自己的逻辑就可以了。
+最后落实：调用的是封装好的RPC服务，暴露在外面的接口是process，只要在接口里实现自己的逻辑就可以了。
 
 下面是部分代码逻辑
 
@@ -50,7 +50,7 @@ for (int i = 0; i < num; ++i) {
 
 ### 进程间通信出现异常
 
-**解决方案：**询问的进程Thread.sleep(3000)后继续尝试发出请求，如果轮询5次后仍然抛出异常，那么放弃询问，将异常抛出。
+解决方案：询问的进程Thread.sleep(3000)后继续尝试发出请求，如果轮询5次后仍然抛出异常，那么放弃询问，将异常抛出。
 
 # 性能测试
 
