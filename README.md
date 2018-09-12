@@ -15,9 +15,11 @@
 
 注意：每条Key的长度不会超过10字节（所以如果是1亿条数据是根本不可能把所有数都放在内存当中的）。
 
-**更新**：每条key是字符串类型的
+**更新**：每条key是字符串类型的，字符中只可能是0~9的数字，在进行分桶的时候先转换成int来做
 
 ### 数据的均匀散列（一级索引）
+
+一级索引文件的大小是
 
 **针对整型的key**
 
@@ -27,6 +29,7 @@
 
 ```java
 //hash函数
+//干扰函数
 public int hashCode(int value){
     return value ^ (value >>> 16);
 }
@@ -42,21 +45,45 @@ public int getIndex(int hash, int length){
 
 
 
+## 缓存机制
 
+对缓存来说最重要的就是缓存的命中率。
+
+**读取**：redis作为缓存时的一些配置
+
+```java
+//设置缓存的最大值
+//每条key的长度是10个字节（准确来讲,因为现在的key是可以转换成Long类型的,所以在redis中会转换成long类型），1MB大概能存102条数据,2GB大概能存22万条数据
+maxmemory 2048mb
+//allkeys-lru和volatile-lru的区别在于volatile-lru是不会删除没有设置expire的键的
+maxmemory-policy allkeys-lru
+```
+
+缓存命中率使用查看
+
+```java
+//连接到redis
+telnet localhost 6379
+//使用info
+info
+//注意里面的#Stats
+//有keyspace_hits和keyspace_misses,缓存的命中率为
+//keyspace_hits/(keyspace_hits+keyspace_misses)
+```
+
+**缓存处理的过程**：每次读数据的时候先从缓存读，如果发现没有，再从二级索引中去读，然后将数据放入缓存当中。
+
+**缓存执行的效率**：在一亿条数据下，缓存的效率保持在70%左右
 
 ## 进程间的通信方式（process）
 
 process()方法，当进程收到其他进程传来的消息时调用的方法，用来完成进程间的通信。输入输出都是byte[]。进程间的通信主要是用在写操作之后，当读取Key的时候，数据可能还没有落盘到hdfs，并且是其他进程put的，那么当前的服务器是找不到的，需要向其他服务器询问是否有该数据。  
 
- 
-
 具体的[进程间的通信方式](https://github.com/jiangxd18/kvstore/blob/master/desc/communicate.md)有这些
 
-最初的实现：项目中最初采用的方式是利用NIO中的socketChannel和socketServerChannel实现通信
+**最初的实现**：项目中最初采用的方式是利用NIO中的socketChannel和socketServerChannel实现通信
 
-
-
-最后落实：调用的是封装好的RPC服务，暴露在外面的接口是process，只要在接口里实现自己的逻辑就可以了。
+**最后落实**：调用的是封装好的RPC服务，暴露在外面的接口是process，只要在接口里实现自己的逻辑就可以了。
 
 下面是部分代码逻辑
 
