@@ -11,11 +11,15 @@
 | batchPut | 批量存储           | boolean batchPut(Map<String, Map<String, String>> records); |
 | process  | 进程间的通信       | byte[] process(byte[] input);                               |
 
-## 数据的存储
+## 数据的存储（put）
 
-注意：相同的key可能会对应不同的value
+注意：每条Key的长度不会超过10字节（所以如果是1亿条数据是根本不可能把所有数都放在内存当中的）。
+
+**更新**：每条key是字符串类型的
 
 ### 数据的均匀散列（一级索引）
+
+**针对整型的key**
 
 因为有很多的key，一级索引是根据key来进行散列的，要求尽可能的均匀。这边借鉴了hashMap中的“扰动函数”的思想，即高16位和低16位进行异或。
 
@@ -40,9 +44,7 @@ public int getIndex(int hash, int length){
 
 
 
-
-
-## 进程间的通信方式
+## 进程间的通信方式（process）
 
 process()方法，当进程收到其他进程传来的消息时调用的方法，用来完成进程间的通信。输入输出都是byte[]。进程间的通信主要是用在写操作之后，当读取Key的时候，数据可能还没有落盘到hdfs，并且是其他进程put的，那么当前的服务器是找不到的，需要向其他服务器询问是否有该数据。  
 
